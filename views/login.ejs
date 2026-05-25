@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Hum Tum Cafeteria</title>
+    <link rel="icon" href="/assets/images/humtum-logo.jpg" type="image/jpeg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #FDF7F0; /* Creamy background from your theme */
+        }
+        .login-card {
+            background-color: #FFFFFF;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #FF8C00;
+            box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.2);
+        }
+        .btn-primary {
+            background-color: #FF8C00;
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+        .btn-primary:hover {
+            background-color: #FFA500;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-md mx-auto">
+        <div class="text-center mb-8">
+            <img src="/assets/images/humtum-logo.jpg" alt="Hum Tum Logo" class="w-28 h-28 mx-auto object-contain rounded-full border-4 border-orange-400 shadow-lg"/>
+            <h1 class="text-5xl font-bold text-orange-500 mt-4" style="font-family: 'Pacifico', cursive;">
+                HumTum Cafeteria
+            </h1>
+            <p class="text-gray-500 mt-2">POS System Login</p>
+        </div>
+        
+        <div class="login-card">
+            <form action="/login" method="POST" class="space-y-6">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="username" name="username" class="input-field mt-1" required>
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password" name="password" class="input-field mt-1" required>
+                </div>
+                <div>
+                    <button type="submit" class="btn-primary">Login</button>
+                </div>
+                <% if (error) { %>
+                    <p class="text-sm text-center text-red-600"><%= error %></p>
+                <% } %>
+            </form>
+        </div>
+        <p class="text-center text-gray-400 text-xs mt-6">
+            &copy;2025 Hum Tum Cafeteria. All rights reserved.
+        </p>
+    </div>
+
+</body>
+</html>

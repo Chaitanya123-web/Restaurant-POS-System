@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hum Tum Cafeteria POS</title>
+    <link rel="icon" href="/assets/images/humtum-logo.jpg" type="image/jpeg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --color-background-primary: #FDF7F0; --color-background-secondary: #FFFFFF; --color-text-dark: #333333; --color-text-muted: #6B7280; --color-accent-primary: #FF8C00; --color-accent-secondary: #FFA500; --color-accent-tertiary: #FFD700; --color-border-light: #E5E7EB; --color-red-600: #DC2626; --color-red-800: #991B1B; --color-green-600: #16A34A; --color-hover-light: #F9FAFB;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--color-background-primary); color: var(--color-text-dark); display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background-color: var(--color-background-secondary); border-right: 1px solid var(--color-border-light); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); transition: transform 0.3s ease-in-out; z-index: 50; }
+        @media (max-width: 1023px) { .sidebar { position: fixed; height: 100%; top: 0; left: 0; transform: translateX(-100%); } .sidebar.show { transform: translateX(0); } }
+        .nav-link { display: flex; align-items: center; padding: 1rem 1.5rem; color: var(--color-text-muted); font-weight: 500; transition: all 0.2s ease; border-radius: 0.75rem; margin: 0.25rem 0.75rem; }
+        .nav-link:hover { background-color: rgb(253, 232, 202); color: var(--color-text-dark); }
+        .nav-link.active { background-color: var(--color-accent-primary); color: white; box-shadow: 0 4px 8px rgba(255, 140, 0, 0.2); }
+        .nav-link.active svg, .nav-link.active i { color: white; }
+        .btn-primary { background-color: var(--color-accent-primary); color: white; padding: 0.75rem 1.25rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.2s ease; display: inline-flex; justify-content: center; align-items: center; gap: 0.5rem; border: 1px solid var(--color-accent-primary); }
+        .btn-primary:hover { background-color: var(--color-accent-secondary); box-shadow: 0 4px 10px rgba(255, 140, 0, 0.3); }
+        .btn-secondary { background-color: var(--color-background-secondary); color: var(--color-text-dark); padding: 0.75rem 1.25rem; border-radius: 0.75rem; font-weight: 600; border: 1px solid var(--color-border-light); transition: all 0.2s ease; display: inline-flex; justify-content: center; align-items: center; gap: 0.5rem; }
+        .btn-secondary:hover { background-color: var(--color-border-light); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); }
+        .btn-print { background-color: var(--color-accent-secondary); color: white; padding: 0.75rem 1.25rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.2s ease; display: inline-flex; justify-content: center; align-items: center; gap: 0.5rem; border: 1px solid var(--color-accent-secondary); }
+        .btn-print:hover { background-color: #E69500; box-shadow: 0 4px 10px rgba(255, 165, 0, 0.3); }
+        .card { background-color: var(--color-background-secondary); border-radius: 1rem; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); border: 1px solid var(--color-border-light); }
+        .chip { display: inline-flex; align-items: center; padding: 0.5rem 1rem; border-radius: 9999px; border: 1px solid var(--color-border-light); background-color: var(--color-background-secondary); color: var(--color-text-muted); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+        .chip:hover { background-color: var(--color-border-light); color: var(--color-text-dark); }
+        .chip.active { background-color: var(--color-accent-primary); color: white; border-color: var(--color-accent-primary); box-shadow: 0 3px 8px rgba(255, 140, 0, 0.25); }
+        .item-card-wrapper { background-color: var(--color-background-secondary); border-radius: 1rem; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s ease-in-out; cursor: pointer; border: 1px solid var(--color-border-light); }
+        .item-card-wrapper:hover { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); transform: translateY(-5px); border-color: var(--color-accent-primary); }
+        .item-card-image-container { width: 100%; padding-bottom: 75%; position: relative; overflow: hidden; border-top-left-radius: 1rem; border-top-right-radius: 1rem; }
+        .item-card-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+        .item-card-details { padding: 0.25rem 1rem; flex-grow: 1; display: flex; justify-content: center; text-align: center; flex-direction: column; justify-content: space-between; }
+        .item-card-name { font-weight: 500; color: var(--color-text-dark); font-size: 1.025rem; }
+        .item-card-price { color: var(--color-accent-primary); font-weight: 800; font-size: 1.1rem; margin-top: auto; }
+        .item-card-controls { padding: 0.75rem 1rem; border-top: 1px solid var(--color-border-light); display: flex; justify-content: center; align-items: center; background-color: var(--color-hover-light); border-bottom-left-radius: 1rem; border-bottom-right-radius: 1rem; }
+        .item-card-quantity-buttons { display: flex; align-items: center; background-color: var(--color-background-secondary); border-radius: 9999px; overflow: hidden; border: 1px solid var(--color-border-light); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .item-card-qty-btn { background-color: transparent; border: none; color: var(--color-text-dark); font-weight: bold; padding: 0.5rem 1rem; cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; font-size: 1.25rem; }
+        .item-card-qty-btn.increase { color: var(--color-green-600); }
+        .item-card-qty-btn.decrease { color: var(--color-red-600); }
+        .item-card-qty-btn:hover, .item-card-qty-btn:active { background-color: var(--color-border-light); }
+        .item-qty-display { min-width: 2.5rem; text-align: center; color: var(--color-accent-primary); font-weight: 700; }
+        .item-card-not-available { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: bold; z-index: 10; }
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.7); }
+        .modal-content { background-color: var(--color-background-secondary); color: var(--color-text-dark); animation: fadeInScale 0.3s ease-out forwards; }
+        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .input-group { position: relative; }
+        .input-group .input-field { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--color-border-light); border-radius: 0.5rem; background-color: var(--color-background-secondary); color: var(--color-text-dark); font-size: 1rem; transition: all 0.2s ease; }
+        .input-group .input-field:focus { outline: none; border-color: var(--color-accent-primary); box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.2); }
+        .input-group label { position: absolute; left: 1rem; top: 0.75rem; color: var(--color-text-muted); font-size: 1rem; pointer-events: none; transition: all 0.2s ease; background-color: var(--color-background-secondary); padding: 0 0.25rem; z-index: 1; }
+        .input-group .input-field:focus + label, .input-group .input-field:not(:placeholder-shown) + label, .input-group .input-field.not-empty + label { top: -0.5rem; font-size: 0.75rem; color: var(--color-accent-primary); left: 0.75rem; z-index: 2; }
+        .input-group select.input-field { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+        .input-group .input-field::placeholder { color: transparent; }
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--color-border-light); transition: .3s; border-radius: 24px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
+        input:checked + .toggle-slider { background-color: var(--color-accent-primary); }
+        input:checked + .toggle-slider:before { transform: translateX(20px); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .pending-salary { background-color: #FEF3C7; border-left: 4px solid var(--color-accent-secondary); }
+        @media print { body * { visibility: hidden; } #invoice-modal, #invoice-modal * { visibility: visible; overflow: visible !important; } #invoice-modal { position: absolute; left: 0; top: 0; width: 100%; background: none; display: block !important; z-index: auto; box-shadow: none; } .modal-content { width: 100% !important; max-width: 100% !important; border-radius: 0; box-shadow: none; margin: 0; padding: 10px; border: none; background-color: #fff; } #invoice-preview { width: 280px; font-family: 'Consolas', 'Courier New', monospace; font-size: 11px; line-height: 1.4; padding: 10px; margin: 0 auto; background: #fff; color: #000; box-shadow: none; border: none; } #invoice-preview h4, #invoice-preview h5 { text-align: center; margin: 2px 0; font-weight: bold; } #invoice-preview h4 { font-size: 16px !important; } #invoice-preview h5 { font-size: 13px !important; } #invoice-preview p { margin: 2px 0; text-align: center; } #invoice-preview table { width: 100%; font-size: 11px; margin: 10px 0; border-collapse: collapse; } #invoice-preview table th, #invoice-preview table td { padding: 4px 2px; border-bottom: 1px dashed #aaa; text-align: left; } #invoice-preview table th { font-weight: bold; } #invoice-preview table tbody tr:last-child td { border-bottom: none; } #invoice-preview .text-xl.font-bold.flex.justify-between.pt-2.border-t.border-dashed.border-border-light { font-size: 12px !important; padding-top: 6px; border-top: 1px dashed #000; font-weight: bold; display: flex; justify-content: space-between; } .close-modal, .btn-print, .modal-content .flex.justify-end.items-center.gap-4.mt-7 { display: none !important; } h3.text-3xl.font-bold.mb-6.text-center.text-text-dark { font-size: 1.5rem !important; margin-bottom: 10px; } body { background: none !important; } }
+    </style>
+</head>
+<body class="font-sans bg-gray-100 flex h-screen overflow-hidden">
+    <div id="pos-system" class="flex flex-1">
+        <aside id="sidebar" class="sidebar lg:relative lg:translate-x-0 p-4 flex flex-col justify-between h-screen">
+            <div>
+                <div class="text-center mb-10 mt-4 flex items-center justify-center lg:justify-start relative">
+                    <img src="/assets/images/humtum-logo.jpg" alt="Hum Tum Logo" class="w-24 h-24 object-contain rounded-full border-4 border-orange-400 shadow-lg mr-3"/>
+                    <h1 class="text-3xl font-bold text-orange-500" style="font-family: 'Pacifico', cursive;">HumTum Cafeteria</h1>
+                    <button id="close-menu" class="lg:hidden absolute right-4 top-0 text-text-dark text-3xl">&times;</button>
+                </div>
+                <nav class="space-y-2">
+                    <a href="#" class="nav-link active" data-section="billing-dashboard"><i class="fas fa-cash-register w-6 h-6 mr-3 text-orange-500"></i> Billing Dashboard</a>
+                    <a href="#" class="nav-link" data-section="menu-management"><i class="fas fa-utensils w-6 h-6 mr-3 text-orange-500"></i> Menu Management</a>
+                    <a href="#" class="nav-link" data-section="order-history"><i class="fas fa-receipt w-6 h-6 mr-3 text-orange-500"></i> Order History</a>
+                    <a href="#" class="nav-link" data-section="sales-summary"><i class="fas fa-chart-line w-6 h-6 mr-3 text-orange-500"></i> Sales Summary</a>
+                    <a href="#" class="nav-link" data-section="worker-management"><i class="fas fa-user-friends w-6 h-6 mr-3 text-orange-500"></i> Worker Management</a>
+                </nav>
+            </div>
+            <div class="mt-auto">
+                <button id="logout-button" class="flex items-center text-lg py-2 px-4 rounded-lg bg-orange-500 hover:bg-orange-700 text-white w-full transition duration-200">
+                    <i class="fas fa-sign-out-alt w-6 h-6 mr-3"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-4 lg:p-6 main-content-padding overflow-auto">
+            <div class="lg:hidden flex justify-end mb-4">
+                <button id="menu-toggle" class="p-2 text-text-dark rounded-md bg-background-secondary border border-border-light">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+
+            <section id="billing-dashboard" class="page-section">
+                <h2 class="text-3xl lg:text-4xl font-bold mb-8 text-text-dark">Billing Dashboard</h2>
+                <div class="lg:grid lg:grid-cols-3 lg:gap-6">
+                    <div class="lg:col-span-2">
+                        <div class="p-6 bg-white rounded-xl shadow-md mb-6">
+                            <h3 class="text-xl font-semibold mb-4 text-text-dark">Select Table</h3>
+                            <div id="table-selection-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4"></div>
+                        </div>
+                        <div class="p-6 bg-background-secondary border border-border-light rounded-xl shadow-md">
+                            <div class="relative w-full mb-4">
+                                <input type="text" id="item-search" placeholder="Search menu items..." class="w-full px-4 py-3 pl-10 bg-hover-light border-0 rounded-full text-base text-text-dark placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-primary transition duration-200 shadow-sm"/>
+                                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M16.65 16.65A7.5 7.5 0 1116.65 2a7.5 7.5 0 010 15z"/></svg>
+                            </div>
+                            <div id="category-chips" class="flex flex-wrap gap-2 sm:gap-3">
+                                <span class="chip active" data-category="All">All</span>
+                            </div>
+                        </div>
+                        <div id="item-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-6"></div>
+                    </div>
+                    <div id="current-bill-panel" class="mt-8 lg:mt-0 p-6 bg-orange-200 rounded-2xl shadow-xl border border-border-light flex flex-col">
+                        <h3 class="text-2xl font-semibold mb-6 flex justify-between items-center text-text-dark">
+                            <span id="bill-panel-title">Current Bill</span>
+                            <span class="flex items-center space-x-2">
+                                <img src="/assets/images/humtum-logo.jpg" alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-accent-primary">
+                            </span>
+                        </h3>
+                        <div id="bill-details" class="flex-grow overflow-hidden">
+                            <div class="flex justify-between items-center text-xs uppercase text-text-muted font-semibold pb-2 border-b border-gray-500 mb-3">
+                                <span>Item</span>
+                                <div class="flex space-x-6 text-right">
+                                    <span>Qty</span>
+                                    <span>Price</span>
+                                    <span class="w-16 text-right">Total</span>
+                                </div>
+                            </div>
+                            <div id="bill-items-container" class="flex-grow overflow-y-auto mb-4 border-gray-500 scrollbar-hide max-h-60 pr-2"></div>
+                            <div class="space-y-3 text-right text-text-muted mt-4 pt-4 border-t border-gray-500 text-sm">
+                                <p class="flex justify-between"><span>Subtotal:</span> <span id="bill-subtotal" class="font-semibold text-text-dark">₹0.00</span></p>
+                                <p class="flex justify-between"><span>SGST (2.5%):</span> <span id="bill-sgst-tax" class="font-semibold text-text-dark">₹0.00</span></p>
+                                <p class="flex justify-between"><span>CGST (2.5%):</span> <span id="bill-cgst-tax" class="font-semibold text-text-dark">₹0.00</span></p>
+                                <div class="flex justify-end items-center gap-2">
+                                    <label for="discount-input" class="text-sm font-medium text-gray-600">Discount:</label>
+                                    <input type="text" id="discount-input" placeholder="₹ or %" class="input-field w-28 text-right py-1.5 px-3 text-sm bg-gray-100 text-gray-800 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400 transition duration-200">
+                                </div>
+                                <p class="text-xl font-bold flex justify-between pt-3 border-t border-dashed border-gray-500"><span>Grand Total:</span> <span id="bill-grandtotal" class="text-accent-tertiary">₹0.00</span></p>
+                            </div>
+                            <div class="mt-6">
+                                <label for="payment-mode" class="block text-sm font-medium text-gray-700 mb-2">Payment Mode</label>
+                                <div class="relative">
+                                    <select id="payment-mode" class="input-field w-full text-base py-2.5 pl-4 pr-10 bg-gray-100 text-gray-800 rounded-md focus:ring-2 focus:ring-yellow-400 focus:outline-none transition duration-200 appearance-none">
+                                        <option value="cash">Cash</option>
+                                        <option value="card">Card</option>
+                                        <option value="upi">UPI</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" /></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="generate-bill-btn" class="btn-primary w-full mt-7 text-lg py-3">Generate Bill</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="menu-management" class="page-section hidden">
+                <h2 class="text-3xl lg:text-4xl font-bold mb-8 text-text-dark">Menu Management</h2>
+                <div class="card p-6 mb-8 flex justify-between items-center">
+                    <h3 class="text-xl font-semibold text-text-dark">All Menu Items</h3>
+                    <button id="add-new-item-btn" class="btn-primary flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Add New Item
+                    </button>
+                </div>
+                <div class="card p-6 overflow-x-auto">
+                    <table class="min-w-full divide-y divide-border-light">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-6 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Item Name</th>
+                                <th class="py-3 px-6 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Category</th>
+                                <th class="py-3 px-6 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Price</th>
+                                <th class="py-3 px-6 text-center text-xs font-semibold text-text-muted uppercase tracking-wider">Available</th>
+                                <th class="py-3 px-6 text-center text-xs font-semibold text-text-muted uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="menu-table-body" class="bg-background-secondary divide-y divide-border-light"></tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <section id="order-history" class="page-section hidden">
+                <h2 class="text-3xl lg:text-4xl font-bold mb-8 text-text-dark">Order History</h2>
+                <div class="p-6 bg-background-secondary border border-border-light rounded-xl shadow-md mb-6">
+                    <div class="relative w-full">
+                        <input type="text" id="bill-search" placeholder="Search by Bill No. (e.g., 0001)" class="w-full px-4 py-3 pl-10 bg-hover-light border-0 rounded-full text-base text-text-dark placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-primary transition duration-200 shadow-sm"/>
+                        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M16.65 16.65A7.5 7.5 0 1116.65 2a7.5 7.5 0 010 15z"/></svg>
+                    </div>
+                </div>
+                <div class="card p-6 overflow-x-auto">
+                    <table class="min-w-full divide-y divide-border-light">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-6 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Date</th>
+                                <th class="py-3 px-6 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Bill No.</th>
+                                <th class="py-3 px-6 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Total Amount</th>
+                                <th class="py-3 px-6 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Payment Mode</th>
+                                <th class="py-3 px-6 text-center text-xs font-semibold text-text-muted uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order-history-table-body" class="bg-background-secondary divide-y divide-border-light"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="sales-summary" class="page-section hidden">
+                <h2 class="text-3xl lg:text-4xl font-bold mb-8 text-text-dark">Sales Summary</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="card p-6 text-center">
+                        <h3 class="text-xl font-semibold mb-3 text-text-dark">Today's Sales</h3>
+                        <p class="text-5xl font-bold text-accent-primary" id="todays-sales">₹0.00</p>
+                    </div>
+                    <div class="card p-6 text-center">
+                        <h3 class="text-xl font-semibold mb-3 text-text-dark">Today's Orders</h3>
+                        <p class="text-5xl font-bold text-accent-primary" id="todays-orders">0</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold mb-4 text-text-dark">Daily Sales</h3>
+                        <div class="h-64 md:h-80"><canvas id="salesChart"></canvas></div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold mb-4 text-text-dark">Sales by Payment Mode</h3>
+                        <div class="h-64 md:h-80 flex items-center justify-center"><canvas id="paymentModeChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="worker-management" class="page-section hidden">
+                <h2 class="text-3xl lg:text-4xl font-bold mb-8 text-text-dark">Worker Management</h2>
+                <div class="card p-6 mb-8 flex flex-col sm:flex-row justify-between items-center">
+                    <h3 class="text-xl font-semibold text-text-dark mb-4 sm:mb-0">Worker List</h3>
+                    <button id="add-new-worker-btn" class="btn-primary flex items-center px-6 py-2 gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Add New Worker
+                    </button>
+                </div>
+                <div class="card p-6 overflow-x-auto">
+                    <table class="min-w-full divide-y divide-border-light">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-6 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Worker Name</th>
+                                <th class="py-3 px-6 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Role</th>
+                                <th class="py-3 px-6 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Monthly Salary</th>
+                                <th class="py-3 px-6 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Paid Salary</th>
+                                <th class="py-3 px-6 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Remaining</th>
+                                <th class="py-3 px-6 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Contact</th>
+                                <th class="py-3 px-6 text-center text-xs font-semibold text-text-muted uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="worker-table-body" class="bg-background-secondary divide-y divide-border-light"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+        
+        <div id="invoice-modal" class="modal-overlay fixed inset-0 flex items-center justify-center p-4 hidden z-[100]">
+            <div class="modal-content p-6 rounded-lg shadow-2xl w-full max-w-2xl relative">
+                <button class="close-modal absolute top-3 right-4 text-text-muted hover:text-text-dark text-3xl font-bold transition-colors">&times;</button>
+                <h3 class="text-xl font-bold mb-1 text-center text-text-dark">Invoice</h3>
+                <div id="invoice-preview" class="bill-output border border-border-light p-5 rounded-md bg-background-primary text-sm text-text-muted leading-relaxed mx-auto">
+                    <h4 class="text-xl font-bold text-center text-text-dark">Hum Tum Cafeteria</h4>
+                    <h4 class="text-xl font-bold text-center mb-2 text-text-dark">Rajendra Nagar Gorakhpur</h4>
+                    <p class="text-center text-sm text-text-muted mb-1">Table No: <span id="invoice-table-no"></span></p>
+                    <p class="text-center text-sm text-text-muted mb-1">Date: <span id="invoice-date"></span></p>
+                    <p class="text-center text-sm text-text-muted mb-5">Bill #HTG-<span id="invoice-bill-no"></span></p>
+                    <table class="w-full mb-6 border-collapse">
+                        <thead>
+                            <tr class="text-sm border-b border-border-light text-text-muted">
+                                <th class=" text-sm text-left py-2 font-semibold">Item</th>
+                                <th class=" text-sm text-center py-2 font-semibold">Qty</th>
+                                <th class=" text-sm text-center py-2 px-2 font-semibold">Price</th>
+                                <th class=" text-sm text-right py-2 px-2 font-semibold">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoice-items-body" class="divide-y divide-border-light"></tbody>
+                    </table>
+                    <div class="text-right space-y-2 border-t pt-4 border-border-light text-base">
+                        <p class="text-sm flex justify-between"><span>Subtotal:</span> <span id="invoice-subtotal" class="font-medium text-text-dark">₹0.00</span></p>
+                        <p class="text-sm flex justify-between"><span>SGST (2.5%):</span> <span id="sgstinvoice-tax" class="font-medium text-text-dark">₹0.00</span></p>
+                        <p class="text-sm flex justify-between"><span>CGST (2.5%):</span> <span id="cgstinvoice-tax" class="font-medium text-text-dark">₹0.00</span></p>
+                        <p class="text-sm flex justify-between"><span>Discount:</span> <span id="invoice-discount" class="font-medium text-text-dark">₹0.00</span></p>
+                        <p class="text-xl font-medium flex justify-between pt-2 border-t border-dashed border-border-light"><span>Grand Total:</span> <span id="invoice-grandtotal" class="text-accent-tertiary">₹0.00</span></p>
+                    </div>
+                    <p class="text-sm mt-5 text-center text-text-muted">Payment Mode: <span id="invoice-payment-mode" class="font-semibold text-text-dark"></span></p>
+                    <p class="text-xs text-text-muted text-center mt-3">Thank you for your visit!</p>
+                </div>
+                <div class="flex justify-end items-center gap-4 mt-7">
+                    <button id="print-bill-btn" class="btn-print flex-shrink-0">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 18h12v-6H6v6zm-2 2V4h16v16H4zm1-8h14V5H5v7zm0 0h14V5H5v7zM18 9h-2V7h2v2zM6 9H4V7h2v2z"/></svg>
+                        Print Bill
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="add-edit-item-modal" class="modal-overlay fixed inset-0 flex items-center justify-center p-4 hidden z-[100]">
+            <div class="modal-content p-6 rounded-lg shadow-2xl w-full max-w-md relative">
+                <button class="close-modal absolute top-3 right-4 text-text-muted hover:text-text-dark text-3xl font-bold transition-colors">&times;</button>
+                <h3 id="modal-title" class="text-2xl font-bold mb-6 text-text-dark">Add New Menu Item</h3>
+                <form id="item-form" class="space-y-6">
+                    <div class="input-group">
+                        <input type="text" id="item-name" placeholder=" " class="input-field" required>
+                        <label for="item-name">Item Name</label>
+                    </div>
+                    <div class="input-group">
+                        <select id="item-category" class="input-field" required value="">
+                            <option value="" disabled selected hidden></option>
+                            <option value="Beverages">Beverages</option>
+                            <option value="Appetizers">Appetizers</option>
+                            <option value="Main Course">Main Course</option>
+                            <option value="Desserts">Desserts</option>
+                            <option value="HTC">HTC</option>
+                        </select>
+                        <label for="item-category">Category</label>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="item-price" placeholder=" " class="input-field" step="0.01" required>
+                        <label for="item-price">Price (₹)</label>
+                    </div>
+                    <div class="input-group">
+                        <input type="url" id="item-image-url" placeholder=" " class="input-field">
+                        <label for="item-image-url">Image URL (Optional)</label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label for="item-available" class="text-sm font-medium text-text-dark">Available</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="item-available" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="text-right">
+                        <button type="submit" class="btn-primary flex items-center gap-2 ml-auto">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            Save Item
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="add-edit-worker-modal" class="modal-overlay fixed inset-0 flex items-center justify-center p-4 hidden z-[100]">
+            <div class="modal-content p-6 rounded-lg shadow-2xl w-full max-w-md relative">
+                <button class="close-modal absolute top-3 right-4 text-text-muted hover:text-text-dark text-3xl font-bold transition-colors">&times;</button>
+                <h3 id="worker-modal-title" class="text-2xl font-bold mb-6 text-text-dark">Add New Worker</h3>
+                <form id="worker-form" class="space-y-6">
+                    <div class="input-group">
+                        <input type="text" id="worker-name" placeholder=" " class="input-field" required>
+                        <label for="worker-name">Worker Name</label>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="worker-role" placeholder=" " class="input-field" required>
+                        <label for="worker-role">Role</label>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="worker-salary" placeholder=" " class="input-field" step="0.01" required>
+                        <label for="worker-salary">Monthly Salary (₹)</label>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="worker-paid-salary" placeholder=" " class="input-field" step="0.01">
+                        <label for="worker-paid-salary">Paid Salary (₹)</label>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="worker-contact" placeholder=" " class="input-field">
+                        <label for="worker-contact">Contact (Phone/Email)</label>
+                    </div>
+                    <div class="text-right">
+                        <button type="submit" class="btn-primary flex items-center gap-2 ml-auto">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            Save Worker
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="confirmation-modal" class="modal-overlay fixed inset-0 flex items-center justify-center p-4 hidden z-[102]">
+            <div class="modal-content p-6 rounded-lg shadow-2xl w-full max-w-sm relative text-center">
+                <h3 id="confirmation-title" class="text-xl font-bold mb-4 text-text-dark"></h3>
+                <p id="confirmation-text" class="text-text-muted mb-6"></p>
+                <div class="flex justify-center space-x-4">
+                    <button id="confirm-cancel-btn" class="btn-secondary px-6 py-2">Cancel</button>
+                    <button id="confirm-ok-btn" class="btn-primary px-6 py-2">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="message-box-modal" class="modal-overlay fixed inset-0 flex items-center justify-center p-4 hidden z-[101]">
+            <div class="modal-content p-6 rounded-lg shadow-2xl w-full max-w-sm relative text-center">
+                <h3 id="message-box-title" class="text-xl font-bold mb-4 text-text-dark"></h3>
+                <p id="message-box-text" class="text-text-muted mb-6"></p>
+                <button id="message-box-ok-btn" class="btn-primary px-8">OK</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- Global State Variables ---
+    let menuItems = [];
+    let orderHistory = [];
+    let workers = [];
+    let tableBills = {};
+    let activeTableId = 'T1';
+    let salesData = { labels: [], data: [] };
+    let salesChart = null;
+    let paymentModeChart = null;
+    let currentCategoryFilter = 'All';
+
+    // --- Define API Base URL ---
+    const API_BASE_URL = `${window.location.protocol}//${window.location.host}`;
+
+    // --- Initial Data Fetching ---
+    Promise.all([
+        fetch(`${API_BASE_URL}/api/menu`).then(res => { if (!res.ok) throw new Error('Menu API failed'); return res.json(); }),
+        fetch(`${API_BASE_URL}/api/orders`).then(res => { if (!res.ok) throw new Error('Orders API failed'); return res.json(); }),
+        fetch(`${API_BASE_URL}/api/workers`).then(res => { if (!res.ok) throw new Error('Workers API failed'); return res.json(); })
+    ]).then(([menuData, orderData, workerData]) => {
+        menuItems = menuData;
+        orderHistory = orderData;
+        workers = workerData;
+        initializeApplication();
+    }).catch(error => {
+        console.error("Fatal Error: Could not fetch initial data from the server.", error);
+        showMessageBox("Connection Error", "Could not load data from the server. Please check the server connection and restart.");
+    });
+
+    // --- DOM Element References ---
+    const itemGrid = document.getElementById('item-grid');
+    const billItemsContainer = document.getElementById('bill-items-container');
+    const billSubtotalElem = document.getElementById('bill-subtotal');
+    const billSgstTaxElem = document.getElementById('bill-sgst-tax');
+    const billCgstTaxElem = document.getElementById('bill-cgst-tax');
+    const discountInput = document.getElementById('discount-input');
+    const billGrandtotalElem = document.getElementById('bill-grandtotal');
+    const billPanelTitle = document.getElementById('bill-panel-title');
+    const tableSelectionGrid = document.getElementById('table-selection-grid');
+    const categoryChipsContainer = document.getElementById('category-chips');
+    const itemSearchInput = document.getElementById('item-search');
+    const menuTableBody = document.getElementById('menu-table-body');
+    const orderHistoryTableBody = document.getElementById('order-history-table-body');
+    const workerTableBody = document.getElementById('worker-table-body');
+    const generateBillBtn = document.getElementById('generate-bill-btn');
+    const printBillBtn = document.getElementById('print-bill-btn');
+    const invoiceModal = document.getElementById('invoice-modal');
+    
+    
+    function initializeApplication() {
+        renderCategoryChips();
+        renderMenuItems(menuItems);
+        renderMenuManagementTable();
+        renderOrderHistory(orderHistory);
+        renderWorkersTable();
+        initializeTableBills();
+        renderTableSelection();
+        selectTable('T1');
+    
+    }
+    
+    
+    function showMessageBox(title, message) {
+        document.getElementById('message-box-title').textContent = title;
+        document.getElementById('message-box-text').textContent = message;
+        document.getElementById('message-box-modal').classList.remove('hidden');
+    }
+
+    let confirmCallback = null;
+    function showConfirmationBox(title, message, onConfirm) {
+        document.getElementById('confirmation-title').textContent = title;
+        document.getElementById('confirmation-text').textContent = message;
+        document.getElementById('confirmation-modal').classList.remove('hidden');
+        confirmCallback = onConfirm;
+    }
+
+    const NUM_TABLES = 12;
+    function initializeTableBills() {
+        for (let i = 1; i <= NUM_TABLES; i++) {
+            tableBills[`T${i}`] = { items: [], discount: '' };
+        }
+    }
+
+    function renderTableSelection() {
+        tableSelectionGrid.innerHTML = '';
+        for (let i = 1; i <= NUM_TABLES; i++) {
+            const tableId = `T${i}`;
+            const tableHasItems = tableBills[tableId].items.length > 0;
+            const tableButton = document.createElement('button');
+            tableButton.dataset.tableId = tableId;
+            let buttonClass = 'p-4 flex flex-col items-center justify-center gap-2 rounded-xl text-sm font-semibold text-gray-800 bg-white border transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-105 ';
+            if (activeTableId === tableId) buttonClass += 'border-orange-500 ring-2 ring-orange-300 bg-orange-100 text-orange-600';
+            else if (tableHasItems) buttonClass += 'border-red-400 bg-red-100 text-red-700';
+            else buttonClass += 'border-gray-300 bg-gray-100 hover:bg-gray-200';
+            tableButton.className = buttonClass;
+            let content = `<i class="fas fa-utensils text-xl text-orange-500"></i><span>Table ${i}</span>`;
+            if (tableHasItems) content = `<span class="text-xs text-white bg-red-500 rounded-full px-2 py-0.5">Active</span>` + content;
+            tableButton.innerHTML = content;
+            tableButton.addEventListener('click', () => selectTable(tableId));
+            tableSelectionGrid.appendChild(tableButton);
+        }
+    }
+
+    function selectTable(tableId) {
+        if(activeTableId) tableBills[activeTableId].discount = discountInput.value;
+        activeTableId = tableId;
+        discountInput.value = tableBills[activeTableId].discount;
+        billPanelTitle.textContent = `Bill for Table ${activeTableId.substring(1)}`;
+        updateBillDisplay();
+        renderTableSelection();
+        filterMenuItems();
+    }
+    
+    function renderCategoryChips() {
+        const categories = ['All', ...new Set(menuItems.map(item => item.category))];
+        categoryChipsContainer.innerHTML = '';
+        categories.forEach(category => {
+            const chip = document.createElement('span');
+            chip.className = 'chip';
+            if (category === currentCategoryFilter) chip.classList.add('active');
+            chip.dataset.category = category;
+            chip.textContent = category;
+            chip.addEventListener('click', (e) => {
+                categoryChipsContainer.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                e.target.classList.add('active');
+                currentCategoryFilter = e.target.dataset.category;
+                filterMenuItems();
+            });
+            categoryChipsContainer.appendChild(chip);
+        });
+    }
+
+    function renderMenuItems(itemsToRender) {
+        itemGrid.innerHTML = '';
+        itemsToRender.forEach(item => {
+            const itemCard = document.createElement('div');
+            itemCard.className = 'item-card-wrapper';
+            const currentBill = tableBills[activeTableId]?.items || [];
+            const itemInBill = currentBill.find(billItem => billItem._id === item._id);
+            const currentQtyInBill = itemInBill ? itemInBill.quantity : 0;
+            const availabilityOverlay = item.available ? '' : '<div class="item-card-not-available">Not Available</div>';
+            const imageUrl = (item.imageUrl && (item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/assets'))) ? item.imageUrl : 'https://placehold.co/400x300/E5E7EB/6B7280?text=No+Image';
+            
+            itemCard.innerHTML = `
+                <div class="item-card-image-container">
+                    <img src="${imageUrl}" alt="${item.name}" class="item-card-image" onerror="this.onerror=null;this.src='https://placehold.co/400x300/E5E7EB/6B7280?text=No+Image';">
+                    ${availabilityOverlay}
+                </div>
+                <div class="item-card-details">
+                    <h4 class="item-card-name">${item.name}</h4>
+                    <p class="item-card-price">₹${item.price.toFixed(2)}</p>
+                </div>
+                <div class="item-card-controls">
+                    ${item.available ? `
+                        <div class="item-card-quantity-buttons flex items-center justify-center gap-0.2 py-1">
+                            <button class="item-card-qty-btn decrease" data-id="${item._id}">-</button>
+                            <span class="px-2 text-text-dark font-medium item-qty-display" data-id="${item._id}">${currentQtyInBill}</span>
+                            <button class="item-card-qty-btn increase" data-id="${item._id}">+</button>
+                        </div>
+                    ` : '<button class="btn-secondary opacity-50 cursor-not-allowed text-xs py-1 px-2">Unavailable</button>'}
+                </div>`;
+            
+            if (item.available) {
+                itemCard.querySelectorAll('.item-card-qty-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        updateItemQuantityFromCard(button.dataset.id, button.classList.contains('increase') ? 'increase' : 'decrease');
+                    });
+                });
+            }
+            itemGrid.appendChild(itemCard);
+        });
+    }
+
+    function updateItemQuantityFromCard(itemId, action) {
+        const itemInMenu = menuItems.find(item => item._id === itemId);
+        if (!itemInMenu) return;
+        let currentBill = tableBills[activeTableId].items;
+        let itemInBill = currentBill.find(billItem => billItem._id === itemId);
+
+        if (action === 'increase') {
+            if (itemInBill) itemInBill.quantity++;
+            else currentBill.push({ ...itemInMenu, quantity: 1 });
+        } else if (action === 'decrease') {
+            if (itemInBill) {
+                itemInBill.quantity--;
+                if (itemInBill.quantity <= 0) {
+                    tableBills[activeTableId].items = currentBill.filter(billItem => billItem._id !== itemId);
+                }
+            }
+        } else if (action === 'remove') {
+             tableBills[activeTableId].items = currentBill.filter(billItem => billItem._id !== itemId);
+        }
+        
+        updateBillDisplay();
+        const itemCardQtyDisplay = document.querySelector(`.item-qty-display[data-id="${itemId}"]`);
+        if (itemCardQtyDisplay) {
+            const updatedQty = tableBills[activeTableId].items.find(billItem => billItem._id === itemId)?.quantity || 0;
+            itemCardQtyDisplay.textContent = updatedQty;
+        }
+        renderTableSelection();
+    }
+
+    function updateBillDisplay() {
+        const currentBill = tableBills[activeTableId]?.items || [];
+        billItemsContainer.innerHTML = '';
+        let subtotal = 0;
+        if (currentBill.length === 0) {
+            billItemsContainer.innerHTML = '<div class="text-center py-4 text-text-muted">No items added yet.</div>';
+        } else {
+            currentBill.forEach(item => {
+                const itemSubtotal = item.price * item.quantity;
+                subtotal += itemSubtotal;
+                const itemRow = document.createElement('div');
+                itemRow.className = 'flex justify-between items-center py-2 border-b border-gray-400 last:border-b-0 text-sm';
+                itemRow.innerHTML = `
+                    <div class="w-2/5 font-medium text-text-dark">${item.name}</div>
+                    <div class="flex items-center justify-center space-x-2 w-24">
+                        <button class="text-red-500 hover:text-red-700 text-lg px-1" data-id="${item._id}" data-action="decrease">-</button>
+                        <span class="w-6 text-center text-text-dark">${item.quantity}</span>
+                        <button class="text-green-500 hover:text-green-700 text-lg px-1" data-id="${item._id}" data-action="increase">+</button>
+                    </div>
+                    <div class="w-1/5 text-right text-text-dark">₹${itemSubtotal.toFixed(2)}</div>
+                    <button class="text-red-600 hover:text-red-800 ml-2" data-id="${item._id}" data-action="remove">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>`;
+                itemRow.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', e => {
+                        updateItemQuantityFromCard(e.currentTarget.dataset.id, e.currentTarget.dataset.action);
+                    });
+                });
+                billItemsContainer.appendChild(itemRow);
+            });
+        }
+        
+        const SGST_RATE = 0.025;
+        const CGST_RATE = 0.025;
+        const sgstAmount = subtotal * SGST_RATE;
+        const cgstAmount = subtotal * CGST_RATE;
+        let discountAmount = 0;
+        const discountValue = discountInput.value.trim();
+        if (discountValue.endsWith('%')) {
+            const percentage = parseFloat(discountValue.replace('%', ''));
+            if (!isNaN(percentage)) discountAmount = subtotal * (percentage / 100);
+        } else {
+            const fixedAmount = parseFloat(discountValue);
+            if (!isNaN(fixedAmount)) discountAmount = fixedAmount;
+        }
+        let grandTotal = subtotal + sgstAmount + cgstAmount - discountAmount;
+        billSubtotalElem.textContent = `₹${subtotal.toFixed(2)}`;
+        billSgstTaxElem.textContent = `₹${sgstAmount.toFixed(2)}`;
+        billCgstTaxElem.textContent = `₹${cgstAmount.toFixed(2)}`;
+        billGrandtotalElem.textContent = `₹${Math.max(0, grandTotal).toFixed(2)}`;
+    }
+    
+    discountInput.addEventListener('input', updateBillDisplay);
+    itemSearchInput.addEventListener('input', () => {
+        currentCategoryFilter = 'All';
+        renderCategoryChips();
+        filterMenuItems();
+    });
+
+    function filterMenuItems() {
+        const searchTerm = itemSearchInput.value.toLowerCase();
+        const filtered = menuItems.filter(item => {
+            const matchesSearch = item.name.toLowerCase().includes(searchTerm);
+            const matchesCategory = currentCategoryFilter === 'All' || item.category === currentCategoryFilter;
+            return matchesSearch && matchesCategory;
+        });
+        renderMenuItems(filtered);
+    }
+    
+    // --- Event Listeners for Buttons and Modals ---
+    document.getElementById('logout-button').addEventListener('click', () => { window.location.href = '/'; });
+    
+    const navLinks = document.querySelectorAll('.nav-link');
+    const pageSections = document.querySelectorAll('.page-section');
+    navLinks.forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            const targetId = link.dataset.section;
+            pageSections.forEach(sec => {
+                if (sec.id === targetId) {
+                    sec.classList.remove('hidden');
+                } else {
+                    sec.classList.add('hidden');
+                }
+            });
+        });
+    });
+
+    // --- Bill Generation Logic ---
+    generateBillBtn.addEventListener('click', async () => {
+        const currentBillItems = tableBills[activeTableId].items;
+        if (currentBillItems.length === 0) {
+            showMessageBox('Empty Bill', 'Please add items to the bill before generating.');
+            return;
+        }
+
+        const subtotal = parseFloat(billSubtotalElem.textContent.replace('₹', ''));
+        const sgst = parseFloat(billSgstTaxElem.textContent.replace('₹', ''));
+        const cgst = parseFloat(billCgstTaxElem.textContent.replace('₹', ''));
+        const grandTotal = parseFloat(billGrandtotalElem.textContent.replace('₹', ''));
+        const paymentMode = document.getElementById('payment-mode').value;
+        const discountValue = discountInput.value.trim();
+        let discountAmount = 0;
+        if (discountValue.endsWith('%')) {
+            const percentage = parseFloat(discountValue.replace('%', ''));
+            if (!isNaN(percentage)) discountAmount = subtotal * (percentage / 100);
+        } else {
+            const fixedAmount = parseFloat(discountValue);
+            if (!isNaN(fixedAmount)) discountAmount = fixedAmount;
+        }
+
+        const orderData = {
+            billNo: (orderHistory.length + 1).toString().padStart(4, '0'),
+            tableNo: parseInt(activeTableId.substring(1)),
+            items: currentBillItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
+            subtotal,
+            sgst,
+            cgst,
+            discount: discountAmount,
+            grandTotal,
+            paymentMode,
+        };
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/orders`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save the order.');
+            }
+
+            const savedOrder = await response.json();
+            orderHistory.unshift(savedOrder);
+            renderOrderHistory(orderHistory);
+            displayInvoice(savedOrder);
+
+            // Clear the bill for the active table
+            tableBills[activeTableId] = { items: [], discount: '' };
+            discountInput.value = '';
+            updateBillDisplay();
+            renderMenuItems(menuItems);
+            renderTableSelection();
+
+        } catch (error) {
+            console.error('Error generating bill:', error);
+            showMessageBox('Error', 'Could not save the order. Please try again.');
+        }
+    });
+
+    function displayInvoice(order) {
+        document.getElementById('invoice-table-no').textContent = order.tableNo;
+        document.getElementById('invoice-date').textContent = new Date(order.date).toLocaleString();
+        document.getElementById('invoice-bill-no').textContent = order.billNo;
+        document.getElementById('invoice-subtotal').textContent = `₹${order.subtotal.toFixed(2)}`;
+        document.getElementById('sgstinvoice-tax').textContent = `₹${order.sgst.toFixed(2)}`;
+        document.getElementById('cgstinvoice-tax').textContent = `₹${order.cgst.toFixed(2)}`;
+        document.getElementById('invoice-discount').textContent = `₹${order.discount.toFixed(2)}`;
+        document.getElementById('invoice-grandtotal').textContent = `₹${order.grandTotal.toFixed(2)}`;
+        document.getElementById('invoice-payment-mode').textContent = order.paymentMode.toUpperCase();
+
+        const invoiceItemsBody = document.getElementById('invoice-items-body');
+        invoiceItemsBody.innerHTML = '';
+        order.items.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="text-left py-2 px-1">${item.name}</td>
+                <td class="text-center py-2 px-1">${item.quantity}</td>
+                <td class="text-center py-2 px-1">₹${item.price.toFixed(2)}</td>
+                <td class="text-right py-2 px-1">₹${(item.price * item.quantity).toFixed(2)}</td>
+            `;
+            invoiceItemsBody.appendChild(row);
+        });
+
+        invoiceModal.classList.remove('hidden');
+    }
+
+    printBillBtn.addEventListener('click', () => window.print());
+    
+    // Universal modal close logic
+    document.querySelectorAll('.modal-overlay, .close-modal').forEach(el => {
+        el.addEventListener('click', (e) => {
+            if (e.target === el) {
+                el.closest('.modal-overlay').classList.add('hidden');
+            }
+        });
+    });
+
+
+    // --- Menu Management Logic ---
+    function renderMenuManagementTable() {
+        menuTableBody.innerHTML = '';
+        menuItems.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="py-3 px-6">${item.name}</td>
+                <td class="py-3 px-6">${item.category}</td>
+                <td class="py-3 px-6 text-right">₹${item.price.toFixed(2)}</td>
+                <td class="py-3 px-6 text-center">${item.available ? 'Yes' : 'No'}</td>
+                <td class="py-3 px-6 text-center">
+                    <button class="text-blue-500">Edit</button>
+                    <button class="text-red-500 ml-2">Delete</button>
+                </td>
+            `;
+            menuTableBody.appendChild(row);
+        });
+    }
+
+    // --- Order History Logic ---
+    function renderOrderHistory(orders) {
+        orderHistoryTableBody.innerHTML = '';
+        orders.forEach(order => {
+            const row = document.createElement('tr');
+            const orderDate = new Date(order.date).toLocaleDateString();
+            row.innerHTML = `
+                <td class="py-3 px-6">${orderDate}</td>
+                <td class="py-3 px-6">${order.billNo}</td>
+                <td class="py-3 px-6 text-right">₹${order.grandTotal.toFixed(2)}</td>
+                <td class="py-3 px-6">${order.paymentMode}</td>
+                <td class="py-3 px-6 text-center"><button class="text-blue-500">View</button></td>
+            `;
+            orderHistoryTableBody.appendChild(row);
+        });
+    }
+
+    // --- Worker Management Logic ---
+    function renderWorkersTable() {
+        workerTableBody.innerHTML = '';
+        workers.forEach(worker => {
+            const row = document.createElement('tr');
+            const remainingSalary = worker.salary - worker.paidSalary;
+            row.innerHTML = `
+                <td class="py-3 px-6">${worker.name}</td>
+                <td class="py-3 px-6">${worker.role}</td>
+                <td class="py-3 px-6 text-right">₹${worker.salary.toFixed(2)}</td>
+                <td class="py-3 px-6 text-right">₹${worker.paidSalary.toFixed(2)}</td>
+                <td class="py-3 px-6 text-right">₹${remainingSalary.toFixed(2)}</td>
+                <td class="py-3 px-6">${worker.contact}</td>
+                <td class="py-3 px-6 text-center">
+                    <button class="text-blue-500">Edit</button>
+                    <button class="text-red-500 ml-2">Delete</button>
+                </td>
+            `;
+            workerTableBody.appendChild(row);
+        });
+    }
+
+});
+</script>
+</body>
+</html>
